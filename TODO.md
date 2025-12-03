@@ -1,0 +1,5 @@
+- [x] Create vite.config.ts with React plugin
+- [x] Update package.json scripts to use Vite
+- [ ] Modify public/index.html for Vite entry point
+- [ ] Remove react-scripts from devDependencies
+- [ ] Run npm audit to verify vulnerabilities are fixed
