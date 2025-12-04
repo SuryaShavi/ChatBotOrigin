@@ -6,6 +6,7 @@ interface ResultData {
   type: 'ai' | 'human';
   confidence: number;
   reasons: string[];
+  model?: 'Heuristic' | 'OpenAI' | 'Heuristic + OpenAI'; // 👈 NEW
 }
 
 interface ResultPanelProps {
@@ -79,11 +80,12 @@ function LoadingState() {
 
 function ResultState({ data }: { data: ResultData }) {
   const isAI = data.type === 'ai';
+  const modelLabel = data.model ?? 'Heuristic'; // 👈 default if backend doesn’t send it
 
   return (
     <div className="w-full max-w-lg">
-      {/* Badge */}
-      <div className="flex justify-center mb-8">
+      {/* Badge + model label */}
+      <div className="flex flex-col items-center mb-8 gap-3">
         <Badge
           variant="outline"
           className={`px-6 py-3 text-base rounded-full border-2 ${
@@ -95,6 +97,10 @@ function ResultState({ data }: { data: ResultData }) {
           {isAI ? <Sparkles className="w-5 h-5" /> : <User className="w-5 h-5" />}
           {isAI ? 'AI-Generated' : 'Human-Written'}
         </Badge>
+
+        <span className="text-[11px] px-3 py-1.5 rounded-full bg-slate-950/80 border border-white/10 tracking-wide opacity-80 font-mono">
+          Model: {modelLabel}
+        </span>
       </div>
 
       {/* Confidence */}

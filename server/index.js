@@ -215,15 +215,23 @@ app.post('/analyze', async (req, res) => {
   try {
     const heuristic = analyzeHeuristically(code, language);
 
+    // 👇 add model for heuristic result
+    heuristic.model = USE_OPENAI ? 'Heuristic + OpenAI' : 'Heuristic';
+
     if (!USE_OPENAI) {
       return res.json(heuristic);
     }
 
     const aiResult = await analyzeWithOpenAI(code, language, heuristic);
+
+    // 👇 label when OpenAI was used on top of heuristics
+    aiResult.model = 'Heuristic + OpenAI';
+
     return res.json(aiResult);
   } catch (err) {
     console.error(err);
     const fallback = analyzeHeuristically(code, language);
+    fallback.model = USE_OPENAI ? 'Heuristic + OpenAI' : 'Heuristic'; // 👈 add model here too
     fallback.reasons.push('An internal server error occurred; returned heuristic result.');
     return res.status(500).json({ error: 'Internal error.', ...fallback });
   }
