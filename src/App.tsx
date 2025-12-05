@@ -23,6 +23,9 @@ interface HistoryItem {
 
 type InfoSection = 'about' | 'api' | 'docs' | null;
 
+// use Vite env; fallback to localhost for dev
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:5000';
+
 const App: React.FC = () => {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('auto');
@@ -60,7 +63,7 @@ const App: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const res = await fetch('http://localhost:5000/analyze', {
+      const res = await fetch(`${API_BASE_URL}/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language }),
@@ -72,15 +75,24 @@ const App: React.FC = () => {
           const errJson = await res.json();
           backendMessage = errJson.error || '';
         } catch {
-          // ignore
+          // ignore parse error
         }
         throw new Error(backendMessage || `Server error (status ${res.status})`);
       }
 
-      const data: ResultData = await res.json();
-      setResult(data);
+      // backend returns { type, confidence, reasons, model? }
+      const dataRaw = (await res.json()) as Partial<ResultData>;
+      // ensure model is present so UI shows "Model: ..." always
+      const normalized: ResultData = {
+        type: dataRaw.type === 'ai' ? 'ai' : 'human',
+        confidence: typeof dataRaw.confidence === 'number' ? Math.max(0, Math.min(100, Math.round(dataRaw.confidence))) : 55,
+        reasons: Array.isArray(dataRaw.reasons) ? dataRaw.reasons : ['No reasons provided by backend.'],
+        model: dataRaw.model ?? 'Heuristic',
+      };
+
+      setResult(normalized);
       setState('result');
-      addToHistory({ language, status: 'success', result: data });
+      addToHistory({ language, status: 'success', result: normalized });
     } catch (err) {
       console.error(err);
       const message =
@@ -281,7 +293,7 @@ Content-Type: application/json
         </section>
 
         {/* RIGHT – RESULT / ERROR PANEL */}
-<section className="relative z-10 bg-black/40 border border-pink-500/25 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-[0_0_40px_rgba(236,72,153,0.25)] overflow-hidden h-[420px]">
+        <section className="relative z-10 bg-black/40 border border-pink-500/25 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-[0_0_40px_rgba(236,72,153,0.25)] overflow-hidden h-[420px]">
           <div className="absolute -top-24 -right-20 w-56 h-56 bg-pink-500/30 blur-3xl rounded-full" />
           <div className="absolute -bottom-32 -left-10 w-64 h-64 bg-cyan-500/30 blur-3xl rounded-full" />
 
