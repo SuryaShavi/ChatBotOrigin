@@ -4,7 +4,7 @@ const cors = require('cors');
 const OpenAI = require('openai');
 
 const app = express();
-app.use(cors());
+app.use(cors()); // allow all origins by default; adjust if you want to restrict
 app.use(express.json());
 
 const openai =
@@ -162,6 +162,7 @@ Code:
 ${code.slice(0, 4000)}
 `;
 
+  // Use the OpenAI client; keep temperature low for predictable output
   const response = await openai.chat.completions.create({
     model: modelName,
     messages: [
@@ -171,7 +172,7 @@ ${code.slice(0, 4000)}
     temperature: 0.2,
   });
 
-  const raw = response.choices[0].message.content || '{}';
+  const raw = response.choices?.[0]?.message?.content || '{}';
 
   let parsed;
   try {
@@ -215,7 +216,7 @@ app.post('/analyze', async (req, res) => {
   try {
     const heuristic = analyzeHeuristically(code, language);
 
-    // 👇 add model for heuristic result
+    // add model for heuristic result
     heuristic.model = USE_OPENAI ? 'Heuristic + OpenAI' : 'Heuristic';
 
     if (!USE_OPENAI) {
@@ -224,20 +225,23 @@ app.post('/analyze', async (req, res) => {
 
     const aiResult = await analyzeWithOpenAI(code, language, heuristic);
 
-    // 👇 label when OpenAI was used on top of heuristics
+    // label when OpenAI was used on top of heuristics
     aiResult.model = 'Heuristic + OpenAI';
 
     return res.json(aiResult);
   } catch (err) {
     console.error(err);
     const fallback = analyzeHeuristically(code, language);
-    fallback.model = USE_OPENAI ? 'Heuristic + OpenAI' : 'Heuristic'; // 👈 add model here too
+    fallback.model = USE_OPENAI ? 'Heuristic + OpenAI' : 'Heuristic';
     fallback.reasons.push('An internal server error occurred; returned heuristic result.');
     return res.status(500).json({ error: 'Internal error.', ...fallback });
   }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`CodeOrigin API listening on http://localhost:${PORT}`);
+// Use process.env.PORT and bind to 0.0.0.0 so render / cloud hosts can reach the server
+const PORT = Number(process.env.PORT || 5000);
+const HOST = process.env.HOST || '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`CodeOrigin API listening on ${HOST}:${PORT}`);
 });
