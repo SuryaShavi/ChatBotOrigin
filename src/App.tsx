@@ -24,7 +24,7 @@ interface HistoryItem {
 type InfoSection = 'about' | 'api' | 'docs' | null;
 
 // use Vite env; fallback to localhost for dev
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string || 'http://localhost:5000';
 
 const App: React.FC = () => {
   const [code, setCode] = useState('');
