@@ -113,6 +113,14 @@ function analyzeHeuristically(code, language = 'auto') {
     reasons.push('Snippet explicitly references AI tools or GPT models.');
   }
 
+  // --- Bias for tiny snippets (like your x=0 / for-loop example) ---
+  const isTinySnippet = lineCount <= 5 && trimmed.length < 180 && !hasAIKeywords;
+  if (isTinySnippet) {
+    // nudge towards human and lower confidence later
+    score -= 1.5;
+    reasons.push('Very small snippet with limited structure; treating as likely human-written.');
+  }
+
   // Base magnitude: longer code gives more confidence
   const lengthFactor = Math.min(trimmed.length / 600, 1); // 0..1
   const magnitude = Math.min(6, Math.abs(score)) * (0.4 + 0.6 * lengthFactor); // 0..6
@@ -134,6 +142,11 @@ function analyzeHeuristically(code, language = 'auto') {
     reasons.push('Signals are mixed; classification is low confidence.');
   }
 
+  // Tiny snippets are always low-confidence
+  if (isTinySnippet) {
+    confidence = Math.min(confidence, 65);
+  }
+
   // Ensure at least one reason
   if (reasons.length === 0) {
     reasons.push('Heuristic rules did not strongly match either class; defaulting to human-written.');
@@ -142,63 +155,57 @@ function analyzeHeuristically(code, language = 'auto') {
   return { type, confidence, reasons };
 }
 
+
 // ---------- OPTIONAL OPENAI ANALYZER ----------
 async function analyzeWithOpenAI(code, language, heuristicResult) {
-  if (!openai) {
-    return heuristicResult;
-  }
+  if (!openai) return heuristicResult;
 
-  const modelName = 'gpt-4.1-mini';
-
-  const systemPrompt =
-    'You are a code-origin classifier. Given some source code, decide if it is AI-generated or human-written. ' +
-    "Respond ONLY with a JSON object with keys: type (\"ai\" or \"human\"), confidence (0-100), reasons (array of 2-4 short strings). " +
-    'Do not include any other text.';
-
-  const userContent = `Language: ${language}
-Heuristic guess: ${JSON.stringify(heuristicResult)}
-
-Code:
-${code.slice(0, 4000)}
-`;
-
-  // Use the OpenAI client; keep temperature low for predictable output
-  const response = await openai.chat.completions.create({
-    model: modelName,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent },
-    ],
-    temperature: 0.2,
-  });
-
-  const raw = response.choices?.[0]?.message?.content || '{}';
-
-  let parsed;
   try {
-    parsed = JSON.parse(raw);
-  } catch {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4.1-mini',
+      // 🔴 JSON mode: forces the model to return valid JSON
+      response_format: { type: 'json_object' },
+      temperature: 0.2,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a code-origin classifier. Return ONLY a JSON object with this shape: ' +
+            '{ "type": "ai" | "human", "confidence": number, "reasons": string[] }.'
+        },
+        {
+          role: 'user',
+          content: `Language: ${language}\n\nCode:\n${code.slice(0, 4000)}`
+        }
+      ]
+    });
+
+    const raw = response.choices?.[0]?.message?.content ?? '{}';
+
+    const parsed = JSON.parse(raw);
+
+    const type = parsed.type === 'ai' ? 'ai' : 'human';
+    const confidence =
+      typeof parsed.confidence === 'number'
+        ? Math.max(1, Math.min(99, Math.round(parsed.confidence)))
+        : heuristicResult.confidence;
+
+    const reasons =
+      Array.isArray(parsed.reasons) && parsed.reasons.length
+        ? parsed.reasons
+        : heuristicResult.reasons;
+
+    return { type, confidence, reasons };
+  } catch (err) {
+    console.error('OpenAI error or JSON parse failed:', err);
     return {
       ...heuristicResult,
       reasons: [
         ...heuristicResult.reasons,
-        'AI model response could not be parsed; falling back to heuristic.',
-      ],
+        'AI model response failed or could not be parsed; falling back to heuristic.'
+      ]
     };
   }
-
-  const type = parsed.type === 'ai' ? 'ai' : 'human';
-  const confidence =
-    typeof parsed.confidence === 'number'
-      ? Math.max(1, Math.min(99, Math.round(parsed.confidence)))
-      : heuristicResult.confidence;
-
-  const reasons =
-    Array.isArray(parsed.reasons) && parsed.reasons.length
-      ? parsed.reasons
-      : heuristicResult.reasons;
-
-  return { type, confidence, reasons };
 }
 
 // ---------- ROUTES ----------
