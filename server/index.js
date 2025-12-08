@@ -7,8 +7,9 @@ const app = express();
 app.use(cors()); // allow all origins by default; adjust if you want to restrict
 app.use(express.json());
 
-const openai =
-  process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null;
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  : null;
 const USE_OPENAI = !!openai;
 
 // ---------- HEURISTIC ANALYZER ----------
@@ -113,10 +114,9 @@ function analyzeHeuristically(code, language = 'auto') {
     reasons.push('Snippet explicitly references AI tools or GPT models.');
   }
 
-  // --- Bias for tiny snippets (like your x=0 / for-loop example) ---
+  // --- Bias for tiny snippets (like small for-loops, 1–5 lines) ---
   const isTinySnippet = lineCount <= 5 && trimmed.length < 180 && !hasAIKeywords;
   if (isTinySnippet) {
-    // nudge towards human and lower confidence later
     score -= 1.5;
     reasons.push('Very small snippet with limited structure; treating as likely human-written.');
   }
@@ -149,12 +149,13 @@ function analyzeHeuristically(code, language = 'auto') {
 
   // Ensure at least one reason
   if (reasons.length === 0) {
-    reasons.push('Heuristic rules did not strongly match either class; defaulting to human-written.');
+    reasons.push(
+      'Heuristic rules did not strongly match either class; defaulting to human-written.'
+    );
   }
 
   return { type, confidence, reasons };
 }
-
 
 // ---------- OPTIONAL OPENAI ANALYZER ----------
 async function analyzeWithOpenAI(code, language, heuristicResult) {
@@ -163,15 +164,16 @@ async function analyzeWithOpenAI(code, language, heuristicResult) {
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4.1-mini',
-      // 🔴 JSON mode: forces the model to return valid JSON
+      // Force valid JSON
       response_format: { type: 'json_object' },
       temperature: 0.2,
       messages: [
         {
           role: 'system',
           content:
-            'You are a code-origin classifier. Return ONLY a JSON object with this shape: ' +
-            '{ "type": "ai" | "human", "confidence": number, "reasons": string[] }.'
+            'You are a code-origin classifier. Return ONLY a JSON object with this exact shape: ' +
+            '{ "type": "ai" | "human", "confidence": integer (0-100), "reasons": string[] }. ' +
+            'The "confidence" field MUST be an integer between 0 and 100.'
         },
         {
           role: 'user',
@@ -181,21 +183,35 @@ async function analyzeWithOpenAI(code, language, heuristicResult) {
     });
 
     const raw = response.choices?.[0]?.message?.content ?? '{}';
-
     const parsed = JSON.parse(raw);
 
     const type = parsed.type === 'ai' ? 'ai' : 'human';
-    const confidence =
-      typeof parsed.confidence === 'number'
-        ? Math.max(1, Math.min(99, Math.round(parsed.confidence)))
-        : heuristicResult.confidence;
 
-    const reasons =
-      Array.isArray(parsed.reasons) && parsed.reasons.length
-        ? parsed.reasons
-        : heuristicResult.reasons;
+    let blendedConfidence = heuristicResult.confidence;
+    if (typeof parsed.confidence === 'number' && !Number.isNaN(parsed.confidence)) {
+      // If the model used 0–1, scale up; otherwise assume 0–100
+      let rawC = parsed.confidence;
+      if (rawC <= 1) rawC = rawC * 100;
 
-    return { type, confidence, reasons };
+      const clipped = Math.max(1, Math.min(99, rawC));
+      // Blend with heuristic confidence so we don't jump to 1% etc.
+      blendedConfidence = Math.round((clipped + heuristicResult.confidence) / 2);
+    }
+
+    const aiReasons = Array.isArray(parsed.reasons) ? parsed.reasons : [];
+    const reasonsBase =
+      aiReasons.length > 0 ? aiReasons : heuristicResult.reasons;
+
+    // Take up to 4 reasons, mixing AI + heuristic (no duplicates)
+    const mergedReasons = Array.from(
+      new Set([...reasonsBase, ...heuristicResult.reasons])
+    ).slice(0, 4);
+
+    return {
+      type,
+      confidence: blendedConfidence,
+      reasons: mergedReasons
+    };
   } catch (err) {
     console.error('OpenAI error or JSON parse failed:', err);
     return {
@@ -222,8 +238,6 @@ app.post('/analyze', async (req, res) => {
 
   try {
     const heuristic = analyzeHeuristically(code, language);
-
-    // add model for heuristic result
     heuristic.model = USE_OPENAI ? 'Heuristic + OpenAI' : 'Heuristic';
 
     if (!USE_OPENAI) {
@@ -231,8 +245,6 @@ app.post('/analyze', async (req, res) => {
     }
 
     const aiResult = await analyzeWithOpenAI(code, language, heuristic);
-
-    // label when OpenAI was used on top of heuristics
     aiResult.model = 'Heuristic + OpenAI';
 
     return res.json(aiResult);
@@ -240,7 +252,9 @@ app.post('/analyze', async (req, res) => {
     console.error(err);
     const fallback = analyzeHeuristically(code, language);
     fallback.model = USE_OPENAI ? 'Heuristic + OpenAI' : 'Heuristic';
-    fallback.reasons.push('An internal server error occurred; returned heuristic result.');
+    fallback.reasons.push(
+      'An internal server error occurred; returned heuristic result.'
+    );
     return res.status(500).json({ error: 'Internal error.', ...fallback });
   }
 });

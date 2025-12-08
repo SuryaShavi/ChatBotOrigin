@@ -24,7 +24,8 @@ interface HistoryItem {
 type InfoSection = 'about' | 'api' | 'docs' | null;
 
 // use Vite env; fallback to localhost for dev
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string || 'http://localhost:5000';
+const API_BASE_URL =
+  (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:5000';
 
 const App: React.FC = () => {
   const [code, setCode] = useState('');
@@ -85,8 +86,13 @@ const App: React.FC = () => {
       // ensure model is present so UI shows "Model: ..." always
       const normalized: ResultData = {
         type: dataRaw.type === 'ai' ? 'ai' : 'human',
-        confidence: typeof dataRaw.confidence === 'number' ? Math.max(0, Math.min(100, Math.round(dataRaw.confidence))) : 55,
-        reasons: Array.isArray(dataRaw.reasons) ? dataRaw.reasons : ['No reasons provided by backend.'],
+        confidence:
+          typeof dataRaw.confidence === 'number'
+            ? Math.max(0, Math.min(100, Math.round(dataRaw.confidence)))
+            : 55,
+        reasons: Array.isArray(dataRaw.reasons)
+          ? dataRaw.reasons
+          : ['No reasons provided by backend.'],
         model: dataRaw.model ?? 'Heuristic',
       };
 
@@ -122,12 +128,13 @@ const App: React.FC = () => {
           </p>
           <ul className="list-disc list-inside text-xs text-slate-300 space-y-1">
             <li>
-              Uses heuristic rules plus an optional OpenAI-based classifier to refine the verdict.
+              Uses heuristic rules plus an optional OpenAI-based classifier to refine
+              the verdict.
             </li>
             <li>Shows a confidence score and short explanations for the decision.</li>
             <li>
-              Designed as a demo — results can be wrong and should not be used for grading,
-              policing, or high-stakes decisions.
+              Designed as a demo — results can be wrong and should not be used for
+              grading, policing, or high-stakes decisions.
             </li>
           </ul>
         </>
@@ -182,7 +189,8 @@ Content-Type: application/json
             Click <span className="font-semibold">Analyze Origin</span>.
           </li>
           <li>
-            Watch the right panel for the AI vs Human verdict, confidence, and model label.
+            Watch the right panel for the AI vs Human verdict, confidence, and model
+            label.
           </li>
         </ol>
         <p className="text-xs text-slate-400">
@@ -194,7 +202,7 @@ Content-Type: application/json
   };
 
   return (
-    <div className="w-screen h-screen bg-gradient-to-br from-[#020617] via-[#020016] to-black text-white">
+    <div className="w-screen min-h-screen bg-gradient-to-br from-[#020617] via-[#020016] to-black text-white">
       {/* HEADER */}
       <header className="w-full flex items-center justify-between px-8 py-4 bg-black/40 backdrop-blur border-b border-cyan-500/10 relative z-20">
         <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -239,7 +247,7 @@ Content-Type: application/json
       )}
 
       {/* MAIN LAYOUT */}
-      <main className="h-[calc(100vh-64px)] px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-6 relative overflow-hidden">
+      <main className="min-h-[calc(100vh-64px)] px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-6 relative overflow-hidden">
         {/* subtle background grid */}
         <div className="pointer-events-none absolute inset-0 opacity-[0.06]">
           <div className="w-full h-full bg-[radial-gradient(circle_at_top,_#22d3ee_0,_transparent_40%),radial-gradient(circle_at_bottom,_#a855f7_0,_transparent_40%)]" />
@@ -293,7 +301,7 @@ Content-Type: application/json
         </section>
 
         {/* RIGHT – RESULT / ERROR PANEL */}
-        <section className="relative z-10 bg-black/40 border border-pink-500/25 rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-[0_0_40px_rgba(236,72,153,0.25)] overflow-hidden h-[420px]">
+        <section className="relative z-10 bg-black/40 border border-pink-500/25 rounded-2xl px-6 py-8 flex flex-col items-center text-center shadow-[0_0_40px_rgba(236,72,153,0.25)] overflow-hidden min-h-[420px]">
           <div className="absolute -top-24 -right-20 w-56 h-56 bg-pink-500/30 blur-3xl rounded-full" />
           <div className="absolute -bottom-32 -left-10 w-64 h-64 bg-cyan-500/30 blur-3xl rounded-full" />
 
@@ -352,9 +360,9 @@ Content-Type: application/json
 
           {/* RESULT STATE */}
           {state === 'result' && result && (
-            <div className="relative w-full max-w-md space-y-6">
+            <div className="relative w-full max-w-md mx-auto space-y-6">
               {/* badge + model */}
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 mb-1">
                 <span
                   className={`px-6 py-2 text-xs font-semibold rounded-full border-2 ${
                     result.type === 'ai'
@@ -415,7 +423,7 @@ Content-Type: application/json
               Run an analysis to see a list of recent results.
             </p>
           ) : (
-            <ul className="space-y-1 max-h-40 overflow-auto text-[11px]">
+            <ul className="space-y-1 max-h-60 overflow-auto text-[11px]">
               {history.map((item) => (
                 <li
                   key={item.id}
