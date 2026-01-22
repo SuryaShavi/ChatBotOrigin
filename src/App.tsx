@@ -247,7 +247,11 @@ Content-Type: application/json
       )}
 
       {/* MAIN LAYOUT */}
-      <main className="min-h-[calc(100vh-64px)] px-8 py-6 grid grid-cols-1 md:grid-cols-2 gap-6 relative overflow-hidden">
+      <main
+      className={`min-h-[calc(100vh-64px)] px-8 py-6 grid gap-6 relative overflow-hidden ${
+      state === 'empty' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'
+       }`    }
+       >
         {/* subtle background grid */}
         <div className="pointer-events-none absolute inset-0 opacity-[0.06]">
           <div className="w-full h-full bg-[radial-gradient(circle_at_top,_#22d3ee_0,_transparent_40%),radial-gradient(circle_at_bottom,_#a855f7_0,_transparent_40%)]" />
@@ -301,117 +305,101 @@ Content-Type: application/json
         </section>
 
         {/* RIGHT – RESULT / ERROR PANEL */}
-        <section className="relative z-10 bg-black/40 border border-pink-500/25 rounded-2xl px-6 py-8 flex flex-col items-center text-center shadow-[0_0_40px_rgba(236,72,153,0.25)] overflow-hidden min-h-[420px]">
-          <div className="absolute -top-24 -right-20 w-56 h-56 bg-pink-500/30 blur-3xl rounded-full" />
-          <div className="absolute -bottom-32 -left-10 w-64 h-64 bg-cyan-500/30 blur-3xl rounded-full" />
+        {state !== 'empty' && (
+  <section className="relative z-10 bg-black/40 border border-pink-500/25 rounded-2xl px-6 py-8 flex flex-col items-center text-center shadow-[0_0_40px_rgba(236,72,153,0.25)] overflow-hidden min-h-[420px]">
+    <div className="absolute -top-24 -right-20 w-56 h-56 bg-pink-500/30 blur-3xl rounded-full" />
+    <div className="absolute -bottom-32 -left-10 w-64 h-64 bg-cyan-500/30 blur-3xl rounded-full" />
 
-          {/* EMPTY STATE */}
-          {state === 'empty' && (
-            <>
-              <div className="relative mb-4 w-32 h-32 rounded-full border border-cyan-400/40 flex items-center justify-center bg-gradient-to-br from-purple-600/40 to-cyan-500/10 shadow-lg">
-                <div className="w-24 h-24 rounded-full border border-dashed border-cyan-300/50 flex items-center justify-center bg-black/80">
-                  <div className="w-4 h-4 rounded-full bg-cyan-300 blur-sm" />
-                </div>
-              </div>
+    {/* LOADING STATE */}
+    {state === 'loading' && (
+      <>
+        <div className="relative mb-4 w-32 h-32 flex items-center justify-center">
+          <div className="w-24 h-24 rounded-full border-2 border-cyan-400/40 border-t-transparent animate-spin" />
+        </div>
+        <h3 className="relative text-lg font-semibold opacity-80">
+          Scanning code patterns…
+        </h3>
+        <p className="relative text-xs opacity-60 mt-2 max-w-xs">
+          Analyzing structure, style, and complexity.
+        </p>
+      </>
+    )}
 
-              <h3 className="relative text-lg font-semibold opacity-80">
-                Awaiting code sample…
-              </h3>
-              <p className="relative text-xs opacity-60 mt-2 max-w-xs">
-                Paste some code on the left and click{' '}
-                <span className="font-semibold">Analyze Origin</span>.
-              </p>
-            </>
+    {/* ERROR STATE */}
+    {state === 'error' && (
+      <div className="relative w-full max-w-md bg-red-900/40 border border-red-500/60 rounded-2xl p-6 text-left">
+        <h3 className="text-sm font-semibold text-red-300 mb-2">
+          Server not reachable
+        </h3>
+        <p className="text-xs text-red-100/90 mb-4">
+          {errorMessage || 'Something went wrong talking to the backend.'}
+        </p>
+        <button
+          onClick={handleAnalyze}
+          disabled={isLoading || !code.trim()}
+          className="px-4 py-1.5 rounded-full bg-red-500 text-xs font-semibold text-white hover:bg-red-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Retry
+        </button>
+      </div>
+    )}
+
+    {/* RESULT STATE */}
+    {state === 'result' && result && (
+      <div className="relative w-full max-w-md mx-auto space-y-6">
+        {/* badge + model */}
+        <div className="flex flex-col items-center gap-2 mb-1">
+          <span
+            className={`px-6 py-2 text-xs font-semibold rounded-full border-2 ${
+              result.type === 'ai'
+                ? 'border-pink-400/70 text-pink-300 bg-pink-500/10'
+                : 'border-cyan-400/70 text-cyan-300 bg-cyan-500/10'
+            }`}
+          >
+            {result.type === 'ai' ? 'AI-Generated' : 'Human-Written'}
+          </span>
+          {result.model && (
+            <span className="text-[11px] text-slate-400">
+              Model:{' '}
+              <span className="font-mono text-slate-200">{result.model}</span>
+            </span>
           )}
+        </div>
 
-          {/* LOADING STATE */}
-          {state === 'loading' && (
-            <>
-              <div className="relative mb-4 w-32 h-32 flex items-center justify-center">
-                <div className="w-24 h-24 rounded-full border-2 border-cyan-400/40 border-t-transparent animate-spin" />
-              </div>
-              <h3 className="relative text-lg font-semibold opacity-80">
-                Scanning code patterns…
-              </h3>
-              <p className="relative text-xs opacity-60 mt-2 max-w-xs">
-                Analyzing structure, style, and complexity.
-              </p>
-            </>
-          )}
+        {/* confidence */}
+        <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-5">
+          <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            {result.confidence}%
+          </div>
+          <p className="text-xs opacity-60 mb-4">Confidence level</p>
 
-          {/* ERROR STATE */}
-          {state === 'error' && (
-            <div className="relative w-full max-w-md bg-red-900/40 border border-red-500/60 rounded-2xl p-6 text-left">
-              <h3 className="text-sm font-semibold text-red-300 mb-2">
-                Server not reachable
-              </h3>
-              <p className="text-xs text-red-100/90 mb-4">
-                {errorMessage || 'Something went wrong talking to the backend.'}
-              </p>
-              <button
-                onClick={handleAnalyze}
-                disabled={isLoading || !code.trim()}
-                className="px-4 py-1.5 rounded-full bg-red-500 text-xs font-semibold text-white hover:bg-red-400 transition disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Retry
-              </button>
-            </div>
-          )}
+          <div className="w-full h-3 bg-slate-900/80 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 shadow-lg shadow-cyan-500/50 transition-all"
+              style={{ width: `${result.confidence}%` }}
+            />
+          </div>
+        </div>
 
-          {/* RESULT STATE */}
-          {state === 'result' && result && (
-            <div className="relative w-full max-w-md mx-auto space-y-6">
-              {/* badge + model */}
-              <div className="flex flex-col items-center gap-2 mb-1">
-                <span
-                  className={`px-6 py-2 text-xs font-semibold rounded-full border-2 ${
-                    result.type === 'ai'
-                      ? 'border-pink-400/70 text-pink-300 bg-pink-500/10'
-                      : 'border-cyan-400/70 text-cyan-300 bg-cyan-500/10'
-                  }`}
-                >
-                  {result.type === 'ai' ? 'AI-Generated' : 'Human-Written'}
-                </span>
-                {result.model && (
-                  <span className="text-[11px] text-slate-400">
-                    Model:{' '}
-                    <span className="font-mono text-slate-200">{result.model}</span>
-                  </span>
-                )}
-              </div>
+        {/* reasons */}
+        <div className="bg-black/60 border border-pink-500/30 rounded-2xl p-5 text-left">
+          <p className="text-xs font-semibold mb-3 text-pink-300">
+            Why we think this:
+          </p>
+          <ul className="space-y-2 text-[11px] opacity-80">
+            {result.reasons.map((r, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="mt-[5px] w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex-shrink-0" />
+                <span>{r}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    )}
+  </section>
+)}
 
-              {/* confidence */}
-              <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-5">
-                <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  {result.confidence}%
-                </div>
-                <p className="text-xs opacity-60 mb-4">Confidence level</p>
-
-                <div className="w-full h-3 bg-slate-900/80 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 shadow-lg shadow-cyan-500/50 transition-all"
-                    style={{ width: `${result.confidence}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* reasons */}
-              <div className="bg-black/60 border border-pink-500/30 rounded-2xl p-5 text-left">
-                <p className="text-xs font-semibold mb-3 text-pink-300">
-                  Why we think this:
-                </p>
-                <ul className="space-y-2 text-[11px] opacity-80">
-                  {result.reasons.map((r, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="mt-[5px] w-1.5 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-pink-500 flex-shrink-0" />
-                      <span>{r}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
-        </section>
 
         {/* HISTORY PANEL */}
         <section className="relative z-10 col-span-1 md:col-span-2 bg-black/40 border border-slate-700/60 rounded-2xl p-4 mt-2 overflow-hidden">
