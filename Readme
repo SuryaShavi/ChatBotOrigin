@@ -27,15 +27,26 @@ ________________________________________
 1️⃣ Clone the repository
 git clone https://github.com/SuryaShavi/ChatBotOrigin.git
 cd ChatBotOrigin
-2️⃣ Install dependencies
+________________________________________
+2️⃣ Backend Setup (Server)
+cd server
 npm install
-3️⃣ Configure environment variables
-Create a .env file in the project root (optional if backend runs locally):
-VITE_API_BASE_URL=http://localhost:5000
-4️⃣ Run the development server
+npm start
+The backend will start at:
+http://localhost:5000
+You should see:
+CodeOrigin API listening on 0.0.0.0:5000
+________________________________________
+3️⃣ Frontend Setup (Client)
+cd ..
+npm install
 npm run dev
-The application will be available at:
+The frontend will be available at:
 http://localhost:5173
+________________________________________
+4️⃣ Environment Variables
+Create a .env file in the root directory (optional if backend runs locally):
+VITE_API_BASE_URL=http://localhost:5000
 ________________________________________
 🔌 Backend API Requirement
 The frontend expects a backend endpoint:
@@ -57,6 +68,18 @@ Example Response
   "model": "Heuristic + OpenAI"
 }
 ________________________________________
+⚠️ Common Setup Note (Vite)
+If you see this warning in the terminal:
+Malformed URI sequence in request URL: /%PUBLIC_URL%/favicon.ico
+It means the favicon path is using Create React App syntax, which is not supported by Vite.
+✅ Fix
+Open index.html and replace:
+<link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+with:
+<link rel="icon" href="/favicon.ico" />
+Then restart the dev server:
+npm run dev
+________________________________________
 ✨ Key Features
 •	🧠 AI vs Human code detection
 •	📊 Confidence score with animated progress bar
@@ -70,9 +93,6 @@ ________________________________________
 •	This tool is for educational and experimental use only
 •	AI-detection is not perfectly reliable
 •	Do not use for grading, plagiarism enforcement, or legal decisions
-________________________________________
-📄 License
-MIT License
 ________________________________________
 👤 Author
 Built by SuryaShavi
