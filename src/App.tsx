@@ -112,9 +112,19 @@ const App: React.FC = () => {
       addToHistory({ language, status: 'error', errorMessage: message });
     }
   };
+  const handleReset = () => {
+  setCode('');
+  setResult(null);
+  setErrorMessage(null);
+  setState('empty');
+};
 
   const isLoading = state === 'loading';
-
+   const getConfidenceLabel = (confidence: number) => {
+      if (confidence >= 80) return { label: 'High', color: 'text-green-400' };
+      if (confidence >= 60) return { label: 'Medium', color: 'text-yellow-400' };
+      return { label: 'Low', color: 'text-red-400' };
+      };
   const renderInfoContent = () => {
     if (!openSection) return null;
 
@@ -290,14 +300,24 @@ Content-Type: application/json
               <option value="cpp">C++</option>
             </select>
 
-            <button
-              onClick={handleAnalyze}
-              disabled={isLoading || !code.trim()}
-              className="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-xs font-semibold tracking-wide shadow-lg shadow-cyan-500/40 hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Analyzing…' : 'Analyze Origin →'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 rounded-full border border-slate-500 text-xs text-slate-300 hover:bg-slate-800 transition"
+              >
+                Reset
+              </button>
+
+              <button
+                onClick={handleAnalyze}
+                disabled={isLoading || !code.trim()}
+                className="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-xs font-semibold tracking-wide shadow-lg shadow-cyan-500/40 hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Analyzing…' : 'Analyze Origin →'}
+              </button>
+            </div>
           </div>
+
 
           <p className="relative mt-3 text-[10px] opacity-60">
             ⚠ This detector is experimental and can be wrong.
@@ -371,7 +391,14 @@ Content-Type: application/json
           <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             {result.confidence}%
           </div>
-          <p className="text-xs opacity-60 mb-4">Confidence level</p>
+          <p className="text-xs opacity-60 mb-1">Confidence level</p>
+          <p className={`text-xs font-semibold ${
+          getConfidenceLabel(result.confidence).color
+            }`}
+          >
+            {getConfidenceLabel(result.confidence).label} Confidence
+          </p>
+
 
           <div className="w-full h-3 bg-slate-900/80 rounded-full overflow-hidden">
             <div
