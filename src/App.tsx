@@ -162,8 +162,6 @@ const App: React.FC = () => {
           <div className="mb-3">
             <p className="text-xs text-slate-300 font-semibold mb-1">Endpoint</p>
             <pre className="text-[11px] bg-black/60 border border-slate-700 rounded-md p-2 font-mono text-slate-100 overflow-x-auto">
-POST http://localhost:5000/analyze
-Content-Type: application/json
 
 {"{ code: string, language: 'auto' | 'javascript' | 'python' | 'java' | 'cpp' }"}
             </pre>
