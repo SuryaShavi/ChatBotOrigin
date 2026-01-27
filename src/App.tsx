@@ -27,6 +27,10 @@ type InfoSection = 'about' | 'api' | 'docs' | null;
 const API_BASE_URL =
   (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:5000';
 
+  // set minimum code length for analysis
+const MIN_CODE_LENGTH = 20;
+
+
 const App: React.FC = () => {
   const [code, setCode] = useState('');
   const [language, setLanguage] = useState('auto');
@@ -125,6 +129,10 @@ const App: React.FC = () => {
       if (confidence >= 60) return { label: 'Medium', color: 'text-yellow-400' };
       return { label: 'Low', color: 'text-red-400' };
       };
+
+  const isCodeValid = code.trim().length >= MIN_CODE_LENGTH;
+
+  
   const renderInfoContent = () => {
     if (!openSection) return null;
 
@@ -285,6 +293,25 @@ const App: React.FC = () => {
             spellCheck={false}
           />
 
+          <p className="mt-2 text-[11px] text-right">
+          <span
+            className={
+              code.length < MIN_CODE_LENGTH
+                ? 'text-red-400'
+                : 'text-green-400'
+            }
+          >
+            {code.length} characters
+          </span>
+
+          {code.length < MIN_CODE_LENGTH && (
+            <span className="ml-2 text-red-400">
+              (minimum {MIN_CODE_LENGTH} required)
+            </span>
+          )}
+          </p>
+
+
           <div className="relative mt-4 flex items-center justify-between gap-3">
             <select
               className="bg-black/60 text-xs rounded-full px-3 py-2 border border-purple-500/40 outline-none tracking-wide"
@@ -308,7 +335,8 @@ const App: React.FC = () => {
 
               <button
                 onClick={handleAnalyze}
-                disabled={isLoading || !code.trim()}
+                disabled={isLoading || !isCodeValid}
+                title={!isCodeValid ? `Enter at least ${MIN_CODE_LENGTH} characters` : ''}
                 className="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-xs font-semibold tracking-wide shadow-lg shadow-cyan-500/40 hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Analyzing…' : 'Analyze Origin →'}
