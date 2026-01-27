@@ -39,6 +39,10 @@ const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [openSection, setOpenSection] = useState<InfoSection>(null);
+  const [showPasteHint, setShowPasteHint] = useState(false);
+  const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string | null>(null);
+
+
 
   const addToHistory = (item: Omit<HistoryItem, 'id' | 'timestamp' | 'codePreview'>) => {
     const now = new Date();
@@ -102,6 +106,7 @@ const App: React.FC = () => {
 
       setResult(normalized);
       setState('result');
+      setLastAnalyzedAt(new Date().toLocaleString());
       addToHistory({ language, status: 'success', result: normalized });
     } catch (err) {
       console.error(err);
@@ -289,7 +294,14 @@ const App: React.FC = () => {
             className="relative mt-4 flex-1 bg-gradient-to-br from-[#020617]/90 to-black/90 rounded-xl p-4 border border-cyan-400/40 focus:border-cyan-300 focus:outline-none font-mono text-xs placeholder:text-cyan-400/40 resize-none"
             placeholder="// Paste your code here..."
             value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={(e) => {
+                                setCode(e.target.value);
+                              }}
+                              onPaste={() => {
+                                setShowPasteHint(true);
+                                setTimeout(() => setShowPasteHint(false), 3000);
+                              }}
+
             spellCheck={false}
           />
 
@@ -310,6 +322,12 @@ const App: React.FC = () => {
             </span>
           )}
           </p>
+
+              {showPasteHint && (
+              <p className="text-[11px] text-cyan-400 mt-1">
+                📋 Code pasted
+              </p>
+               )}
 
 
           <div className="relative mt-4 flex items-center justify-between gap-3">
@@ -411,6 +429,13 @@ const App: React.FC = () => {
             </span>
           )}
         </div>
+
+              {lastAnalyzedAt && (
+              <p className="text-[11px] text-slate-400 mt-1">
+                Last analyzed at {lastAnalyzedAt}
+              </p>
+              )}
+
 
         {/* confidence */}
         <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-5">
