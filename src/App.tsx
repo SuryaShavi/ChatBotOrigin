@@ -30,6 +30,24 @@ const API_BASE_URL =
   // set minimum code length for analysis
 const MIN_CODE_LENGTH = 20;
 
+      const SAMPLE_JS_CODE = `function sum(a, b) {
+        return a + b;
+      }
+
+      const numbers = [1, 2, 3, 4];
+      const total = numbers.reduce((acc, n) => acc + n, 0);
+
+      console.log(total);`;
+
+      const SAMPLE_PY_CODE = `def sum_numbers(numbers):
+          total = 0
+          for n in numbers:
+              total += n
+          return total
+
+      nums = [1, 2, 3, 4]
+      print(sum_numbers(nums))`;
+
 
 const App: React.FC = () => {
   const [code, setCode] = useState('');
@@ -41,6 +59,7 @@ const App: React.FC = () => {
   const [openSection, setOpenSection] = useState<InfoSection>(null);
   const [showPasteHint, setShowPasteHint] = useState(false);
   const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string | null>(null);
+  const [animatedConfidence, setAnimatedConfidence] = useState(0);
 
 
 
@@ -106,6 +125,11 @@ const App: React.FC = () => {
 
       setResult(normalized);
       setState('result');
+      setAnimatedConfidence(0);
+      setTimeout(() => {
+        setAnimatedConfidence(normalized.confidence);
+      }, 100);
+
       setLastAnalyzedAt(new Date().toLocaleString());
       addToHistory({ language, status: 'success', result: normalized });
     } catch (err) {
@@ -127,6 +151,22 @@ const App: React.FC = () => {
   setErrorMessage(null);
   setState('empty');
 };
+
+const handleClearText = () => {
+  setCode('');
+};
+
+
+const insertSampleCode = (lang: 'javascript' | 'python') => {
+  if (lang === 'javascript') {
+    setCode(SAMPLE_JS_CODE);
+    setLanguage('javascript');
+  } else {
+    setCode(SAMPLE_PY_CODE);
+    setLanguage('python');
+  }
+};
+
 
   const isLoading = state === 'loading';
    const getConfidenceLabel = (confidence: number) => {
@@ -329,6 +369,22 @@ const App: React.FC = () => {
               </p>
                )}
 
+            <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => insertSampleCode('javascript')}
+              className="px-3 py-1 rounded-full text-[11px] border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10 transition"
+            >
+              Sample JS
+            </button>
+
+            <button
+              onClick={() => insertSampleCode('python')}
+              className="px-3 py-1 rounded-full text-[11px] border border-purple-500/40 text-purple-300 hover:bg-purple-500/10 transition"
+            >
+              Sample Python
+            </button>
+            </div>
+
 
           <div className="relative mt-4 flex items-center justify-between gap-3">
             <select
@@ -344,6 +400,14 @@ const App: React.FC = () => {
             </select>
 
             <div className="flex gap-2">
+              
+              <button
+                onClick={handleClearText}
+                className="px-4 py-2 rounded-full border border-cyan-500/40 text-xs text-cyan-300 hover:bg-cyan-500/10 transition"
+              >
+                Clear Text
+              </button>
+
               <button
                 onClick={handleReset}
                 className="px-4 py-2 rounded-full border border-slate-500 text-xs text-slate-300 hover:bg-slate-800 transition"
@@ -440,7 +504,8 @@ const App: React.FC = () => {
         {/* confidence */}
         <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-5">
           <div className="text-5xl font-bold mb-2 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            {result.confidence}%
+            {animatedConfidence}%
+
           </div>
           <p className="text-xs opacity-60 mb-1">Confidence level</p>
           <p className={`text-xs font-semibold ${
@@ -454,7 +519,10 @@ const App: React.FC = () => {
           <div className="w-full h-3 bg-slate-900/80 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 shadow-lg shadow-cyan-500/50 transition-all"
-              style={{ width: `${result.confidence}%` }}
+              style={{
+                      width: `${animatedConfidence}%`,
+                      transition: 'width 1.2s ease-out',
+                    }}
             />
           </div>
         </div>
