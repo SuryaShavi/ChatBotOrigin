@@ -60,6 +60,7 @@ const App: React.FC = () => {
   const [showPasteHint, setShowPasteHint] = useState(false);
   const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string | null>(null);
   const [animatedConfidence, setAnimatedConfidence] = useState(0);
+  const [analysisDuration, setAnalysisDuration] = useState<number | null>(null);
 
 
 
@@ -84,9 +85,13 @@ const App: React.FC = () => {
     );
   };
 
+  
+
   const handleAnalyze = async () => {
     if (!code.trim()) return;
 
+    const startTime = performance.now();
+  
     setState('loading');
     setErrorMessage(null);
 
@@ -123,6 +128,9 @@ const App: React.FC = () => {
         model: dataRaw.model ?? 'Heuristic',
       };
 
+      const endTime = performance.now();
+      setAnalysisDuration(Number(((endTime - startTime) / 1000).toFixed(2)));
+
       setResult(normalized);
       setState('result');
       setAnimatedConfidence(0);
@@ -154,6 +162,20 @@ const App: React.FC = () => {
 
 const handleClearText = () => {
   setCode('');
+};
+
+const handleCopyResult = async () => {
+  if (!result) return;
+
+  const text = `
+Verdict: ${result.type === 'ai' ? 'AI-Generated' : 'Human-Written'}
+Confidence: ${result.confidence}%
+Reasons:
+${result.reasons.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+  `.trim();
+
+  await navigator.clipboard.writeText(text);
+  alert('Result copied to clipboard');
 };
 
 
@@ -500,6 +522,12 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
               </p>
               )}
 
+            {analysisDuration !== null && (
+            <p className="text-[11px] text-slate-400 mt-1">
+              Analysis took {analysisDuration}s
+            </p>
+            )}
+
 
         {/* confidence */}
         <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-5">
@@ -526,6 +554,14 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
             />
           </div>
         </div>
+
+          <button
+          onClick={handleCopyResult}
+          className="w-full mt-3 px-4 py-2 rounded-full bg-slate-800 text-xs text-slate-200 hover:bg-slate-700 transition"
+          >
+          📋 Copy Result
+          </button>
+
 
         {/* reasons */}
         <div className="bg-black/60 border border-pink-500/30 rounded-2xl p-5 text-left">
