@@ -48,6 +48,54 @@ const MIN_CODE_LENGTH = 20;
       nums = [1, 2, 3, 4]
       print(sum_numbers(nums))`;
 
+        const detectLanguageFromCode = (code: string): string => {
+          const c = code.toLowerCase();
+
+          // 🔥 STRONG Java signals (check FIRST)
+          if (
+            /public\s+class\s+\w+/.test(c) ||
+            /public\s+static\s+void\s+main/.test(c) ||
+            /system\.out\.print/.test(c) ||
+            /import\s+java\./.test(c) ||
+            /scanner\s+\w+\s*=\s*new\s+scanner/.test(c)
+          ) {
+            return 'Java';
+          }
+
+          // JavaScript
+          if (
+            /function\s+\w+/.test(c) ||
+            /\bconsole\.log/.test(c) ||
+            /\b(const|let|var)\b/.test(c) ||
+            /=>/.test(c)
+          ) {
+            return 'JavaScript';
+          }
+
+          // Python
+          if (
+            /def\s+\w+\s*\(/.test(c) ||
+            /\bprint\(/.test(c) ||
+            /import\s+\w+/.test(c) ||
+            /:\s*\n/.test(code) // indentation style
+          ) {
+            return 'Python';
+          }
+
+          // C++
+          if (
+            /#include\s*</.test(c) ||
+            /std::/.test(c) ||
+            /cout\s*<<|cin\s*>>/.test(c) ||
+            /int\s+main\s*\(/.test(c)
+          ) {
+            return 'C++';
+          }
+
+          return 'Unknown';
+        };
+
+
 
 const App: React.FC = () => {
   const [code, setCode] = useState('');
@@ -61,7 +109,7 @@ const App: React.FC = () => {
   const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string | null>(null);
   const [animatedConfidence, setAnimatedConfidence] = useState(0);
   const [analysisDuration, setAnalysisDuration] = useState<number | null>(null);
-
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
 
 
   const addToHistory = (item: Omit<HistoryItem, 'id' | 'timestamp' | 'codePreview'>) => {
@@ -127,6 +175,9 @@ const App: React.FC = () => {
           : ['No reasons provided by backend.'],
         model: dataRaw.model ?? 'Heuristic',
       };
+      
+      const detected = detectLanguageFromCode(code);
+      setDetectedLanguage(detected);
 
       const endTime = performance.now();
       setAnalysisDuration(Number(((endTime - startTime) / 1000).toFixed(2)));
@@ -515,6 +566,11 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
             </span>
           )}
         </div>
+              {detectedLanguage && (
+              <p className="text-[11px] text-slate-400 mt-1">
+                Detected language: <span className="text-cyan-300">{detectedLanguage}</span>
+              </p>
+              )}
 
               {lastAnalyzedAt && (
               <p className="text-[11px] text-slate-400 mt-1">
