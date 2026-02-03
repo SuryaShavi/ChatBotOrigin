@@ -111,6 +111,9 @@ const App: React.FC = () => {
   const [analysisDuration, setAnalysisDuration] = useState<number | null>(null);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const [lastAnalyzedCode, setLastAnalyzedCode] = useState<string | null>(null);
+  const [animateBadge, setAnimateBadge] = useState(false);
+  const [analysisCount, setAnalysisCount] = useState(0);
+
 
   const isSameAsLastAnalysis =
   lastAnalyzedCode !== null && code.trim() === lastAnalyzedCode.trim();
@@ -187,6 +190,9 @@ const App: React.FC = () => {
 
       setResult(normalized);
       setState('result');
+      setAnalysisCount((prev) => prev + 1);
+      setAnimateBadge(false);
+      setTimeout(() => setAnimateBadge(true), 50);
       setLastAnalyzedCode(code);
       setAnimatedConfidence(0);
       setTimeout(() => {
@@ -561,15 +567,18 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
       <div className="relative w-full max-w-md mx-auto space-y-6">
         {/* badge + model */}
         <div className="flex flex-col items-center gap-2 mb-1">
-          <span
-            className={`px-6 py-2 text-xs font-semibold rounded-full border-2 ${
-              result.type === 'ai'
-                ? 'border-pink-400/70 text-pink-300 bg-pink-500/10'
-                : 'border-cyan-400/70 text-cyan-300 bg-cyan-500/10'
-            }`}
+         <span
+          className={`px-6 py-2 text-xs font-semibold rounded-full border-2 transition-all duration-500
+          ${animateBadge ? 'scale-100 opacity-100' : 'scale-75 opacity-0'}
+          ${
+            result.type === 'ai'
+              ? 'border-pink-400/70 text-pink-300 bg-pink-500/10'
+              : 'border-cyan-400/70 text-cyan-300 bg-cyan-500/10'
+          }`}
           >
             {result.type === 'ai' ? 'AI-Generated' : 'Human-Written'}
           </span>
+
           {result.model && (
             <span className="text-[11px] text-slate-400">
               Model:{' '}
@@ -588,6 +597,10 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
                 Last analyzed at {lastAnalyzedAt}
               </p>
               )}
+              <p className="text-[11px] text-slate-400 mt-1">
+              Total analyses performed: {analysisCount}
+              </p>
+
 
             {analysisDuration !== null && (
             <p className="text-[11px] text-slate-400 mt-1">
