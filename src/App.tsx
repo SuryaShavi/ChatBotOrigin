@@ -585,28 +585,41 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
               <span className="font-mono text-slate-200">{result.model}</span>
             </span>
           )}
-        </div>
-              {detectedLanguage && (
-              <p className="text-[11px] text-slate-400 mt-1">
-                Detected language: <span className="text-cyan-300">{detectedLanguage}</span>
-              </p>
-              )}
+        </div >
+              {/* META INFO GRID WITH ICONS */}
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-[11px] text-slate-400 text-left">
+                {detectedLanguage && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-cyan-400">🌐</span>
+                    <span className="opacity-60">Detected language:</span>
+                    <span className="text-cyan-300 font-medium">
+                      {detectedLanguage}
+                    </span>
+                  </div>
+                )}
 
-              {lastAnalyzedAt && (
-              <p className="text-[11px] text-slate-400 mt-1">
-                Last analyzed at {lastAnalyzedAt}
-              </p>
-              )}
-              <p className="text-[11px] text-slate-400 mt-1">
-              Total analyses performed: {analysisCount}
-              </p>
+                {lastAnalyzedAt && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-purple-400">🕒</span>
+                    <span className="opacity-60">Last analyzed:</span>
+                    <span>{lastAnalyzedAt}</span>
+                  </div>
+                )}
 
+                <div className="flex items-center gap-2">
+                  <span className="text-pink-400">🔢</span>
+                  <span className="opacity-60">Total analyses:</span>
+                  <span>{analysisCount}</span>
+                </div>
 
-            {analysisDuration !== null && (
-            <p className="text-[11px] text-slate-400 mt-1">
-              Analysis took {analysisDuration}s
-            </p>
-            )}
+                {analysisDuration !== null && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400">⚡</span>
+                    <span className="opacity-60">Analysis time:</span>
+                    <span>{analysisDuration}s</span>
+                  </div>
+                )}
+              </div>
 
 
         {/* confidence */}
