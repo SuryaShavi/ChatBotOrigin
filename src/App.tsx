@@ -110,7 +110,10 @@ const App: React.FC = () => {
   const [animatedConfidence, setAnimatedConfidence] = useState(0);
   const [analysisDuration, setAnalysisDuration] = useState<number | null>(null);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
+  const [lastAnalyzedCode, setLastAnalyzedCode] = useState<string | null>(null);
 
+  const isSameAsLastAnalysis =
+  lastAnalyzedCode !== null && code.trim() === lastAnalyzedCode.trim();
 
   const addToHistory = (item: Omit<HistoryItem, 'id' | 'timestamp' | 'codePreview'>) => {
     const now = new Date();
@@ -184,6 +187,7 @@ const App: React.FC = () => {
 
       setResult(normalized);
       setState('result');
+      setLastAnalyzedCode(code);
       setAnimatedConfidence(0);
       setTimeout(() => {
         setAnimatedConfidence(normalized.confidence);
@@ -489,13 +493,20 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
               </button>
 
               <button
-                onClick={handleAnalyze}
-                disabled={isLoading || !isCodeValid}
-                title={!isCodeValid ? `Enter at least ${MIN_CODE_LENGTH} characters` : ''}
-                className="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-xs font-semibold tracking-wide shadow-lg shadow-cyan-500/40 hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Analyzing…' : 'Analyze Origin →'}
-              </button>
+              onClick={handleAnalyze}
+              disabled={isLoading || !isCodeValid || isSameAsLastAnalysis}
+              title={
+                isSameAsLastAnalysis
+                  ? 'Code unchanged since last analysis'
+                  : !isCodeValid
+                  ? `Enter at least ${MIN_CODE_LENGTH} characters`
+                  : ''
+              }
+              className="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 text-black text-xs font-semibold tracking-wide shadow-lg shadow-cyan-500/40 hover:brightness-110 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Analyzing…' : 'Analyze Origin →'}
+            </button>
+
             </div>
           </div>
 
