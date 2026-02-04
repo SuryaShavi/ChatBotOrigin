@@ -95,6 +95,15 @@ const MIN_CODE_LENGTH = 20;
           return 'Unknown';
         };
 
+const Tooltip: React.FC<{ text: string }> = ({ text }) => (
+  <span className="relative group cursor-help">
+    <span className="text-slate-400 ml-1">ℹ️</span>
+    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block
+      whitespace-nowrap rounded-md bg-black px-2 py-1 text-[10px] text-white shadow-lg z-50">
+      {text}
+    </span>
+  </span>
+  );
 
 
 const App: React.FC = () => {
@@ -601,7 +610,12 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
                 {detectedLanguage && (
                   <div className="flex items-center gap-2">
                     <span className="text-cyan-400">🌐</span>
-                    <span className="opacity-60">Detected language:</span>
+
+                    <span className="opacity-60 flex items-center">
+                        Detected language
+                        <Tooltip text="Language inferred automatically from code structure and keywords" />
+                    </span>
+
                     <span className="text-cyan-300 font-medium">
                       {detectedLanguage}
                     </span>
@@ -625,7 +639,11 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
                 {analysisDuration !== null && (
                   <div className="flex items-center gap-2">
                     <span className="text-yellow-400">⚡</span>
-                    <span className="opacity-60">Analysis time:</span>
+                    <span className="opacity-60 flex items-center">
+                      Analysis time
+                      <Tooltip text="Time taken by the system to analyze your code" />
+                    </span>
+
                     <span>{analysisDuration}s</span>
                   </div>
                 )}
@@ -638,7 +656,11 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
             {animatedConfidence}%
 
           </div>
-          <p className="text-xs opacity-60 mb-1">Confidence level</p>
+          <p className="text-xs opacity-60 mb-1 flex items-center justify-center gap-1">
+            Confidence level
+            <Tooltip text="How confident the system is about the AI vs Human verdict" />
+          </p>
+
           <p className={`text-xs font-semibold ${
           getConfidenceLabel(result.confidence).color
             }`}
