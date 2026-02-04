@@ -123,6 +123,8 @@ const App: React.FC = () => {
   const [animateBadge, setAnimateBadge] = useState(false);
   const [analysisCount, setAnalysisCount] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
 
 
   const isSameAsLastAnalysis =
@@ -365,7 +367,14 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
   };
 
   return (
-    <div className="w-screen min-h-screen bg-gradient-to-br from-[#020617] via-[#020016] to-black text-white">
+    <div
+      className={`w-screen min-h-screen transition-colors duration-300 ${
+        theme === 'dark'
+          ? 'bg-gradient-to-br from-[#020617] via-[#020016] to-black text-white'
+          : 'bg-gradient-to-br from-slate-100 to-white text-slate-900'
+      }`}
+    >
+
       {/* HEADER */}
       <header className="w-full flex items-center justify-between px-8 py-4 bg-black/40 backdrop-blur border-b border-cyan-500/10 relative z-20">
         <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
@@ -391,6 +400,15 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
           >
             Docs
           </button>
+          
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="ml-4 px-3 py-1 rounded-full text-xs border border-slate-400/40 hover:bg-slate-200/20 transition"
+          >
+            {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+          </button>
+
+
         </nav>
       </header>
 
