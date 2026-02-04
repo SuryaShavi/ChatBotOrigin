@@ -113,6 +113,7 @@ const App: React.FC = () => {
   const [lastAnalyzedCode, setLastAnalyzedCode] = useState<string | null>(null);
   const [animateBadge, setAnimateBadge] = useState(false);
   const [analysisCount, setAnalysisCount] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
 
 
   const isSameAsLastAnalysis =
@@ -139,10 +140,14 @@ const App: React.FC = () => {
     );
   };
 
-  
+  const showToast = (message: string) => {
+  setToast(message);
+  setTimeout(() => setToast(null), 2500);
+};
 
   const handleAnalyze = async () => {
     if (!code.trim()) return;
+    showToast('🔍 Analysis started');
 
     const startTime = performance.now();
   
@@ -190,6 +195,7 @@ const App: React.FC = () => {
 
       setResult(normalized);
       setState('result');
+      showToast('✅ Analysis completed');
       setAnalysisCount((prev) => prev + 1);
       setAnimateBadge(false);
       setTimeout(() => setAnimateBadge(true), 50);
@@ -225,6 +231,9 @@ const handleClearText = () => {
   setCode('');
 };
 
+
+
+
 const handleCopyResult = async () => {
   if (!result) return;
 
@@ -236,7 +245,8 @@ ${result.reasons.map((r, i) => `${i + 1}. ${r}`).join('\n')}
   `.trim();
 
   await navigator.clipboard.writeText(text);
-  alert('Result copied to clipboard');
+  showToast('📋 Result copied to clipboard');
+
 };
 
 
@@ -733,6 +743,13 @@ const insertSampleCode = (lang: 'javascript' | 'python') => {
           )}
         </section>
       </main>
+          {/* ✅ TOAST NOTIFICATION */}
+          {toast && (
+            <div className="fixed bottom-6 right-6 z-50 bg-black/80 text-white text-xs px-4 py-2 rounded-full shadow-lg">
+            {toast}
+            </div>
+            )}
+
     </div>
   );
 };
